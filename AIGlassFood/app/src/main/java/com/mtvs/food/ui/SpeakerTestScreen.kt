@@ -70,6 +70,7 @@ import java.util.Locale
 fun SpeakerTestScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    testModeSwitch: (@Composable () -> Unit)? = null,
     viewModel: SpeakerTestViewModel =
         viewModel(
             factory =
@@ -99,6 +100,7 @@ fun SpeakerTestScreen(
       verticalArrangement = Arrangement.spacedBy(18.dp),
   ) {
     SpeakerHeader(onBack = onBack, onRefresh = viewModel::refreshAudioDevices)
+    testModeSwitch?.invoke()
 
     SpeakerStatusPanel(
         routeStatus = ui.audioRouteStatus,

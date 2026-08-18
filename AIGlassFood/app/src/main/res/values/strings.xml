@@ -7,6 +7,9 @@
     <!-- App chrome -->
     <string name="scaffold_error_icon_description" description="Content description for the error snackbar icon">AIGlassFood error</string>
     <string name="debug_menu_description" description="Content description for the debug menu button">Debug menu</string>
+    <string name="test_mode_camera" description="Camera test mode label">카메라</string>
+    <string name="test_mode_speaker" description="Speaker test mode label">스피커</string>
+    <string name="test_mode_microphone" description="Microphone test mode label">마이크</string>
 
     <!-- Home Screen -->
     <string name="register_button_title" description="Connect App">Connect my glasses</string>
@@ -50,6 +53,39 @@
     <string name="speaker_error_no_bluetooth" description="No Bluetooth audio device error">Ray-Ban Meta를 Bluetooth 오디오 장치로 연결한 뒤 다시 시도해주세요.</string>
     <string name="speaker_error_tts_init" description="TTS initialization error">TTS 엔진을 초기화할 수 없습니다. Android TTS 설정을 확인해주세요.</string>
     <string name="speaker_error_tts_speak" description="TTS speak error">음성 재생을 시작할 수 없습니다. 다시 시도해주세요.</string>
+
+    <!-- Microphone Test Screen -->
+    <string name="microphone_test_button_title" description="Open microphone test">Microphone test</string>
+    <string name="microphone_test_title" description="Microphone test screen title">마이크 테스트</string>
+    <string name="microphone_refresh" description="Refresh microphone route state">새로고침</string>
+    <string name="microphone_start_button" description="Start microphone STT">녹음 시작</string>
+    <string name="microphone_stop_button" description="Stop microphone STT">녹음 종료</string>
+    <string name="microphone_partial_result_title" description="Partial STT result title">실시간 인식</string>
+    <string name="microphone_final_result_title" description="Final STT result title">최종 인식 결과</string>
+    <string name="microphone_listening_placeholder" description="Listening placeholder">Ray-Ban Meta를 착용하고 말해주세요.</string>
+    <string name="microphone_empty_partial_result" description="Empty partial STT result">녹음을 시작하면 실시간 인식 결과가 표시됩니다.</string>
+    <string name="microphone_empty_final_result" description="Empty final STT result">녹음 종료 후 최종 문자열이 표시됩니다.</string>
+    <string name="microphone_copy_button" description="Copy STT result">복사</string>
+    <string name="microphone_clear_button" description="Clear STT result">초기화</string>
+    <string name="microphone_candidates_title" description="STT result candidates title">후보 결과</string>
+    <string name="microphone_candidate_item" description="STT result candidate item">%1$d. %2$s</string>
+    <string name="microphone_open_bluetooth_settings" description="Open Bluetooth settings">Bluetooth 설정 열기</string>
+    <string name="microphone_open_app_settings" description="Open app settings">앱 권한 설정 열기</string>
+    <string name="microphone_status_preparing" description="Microphone preparing status">Ray-Ban Meta 마이크 입력을 준비하고 있습니다.</string>
+    <string name="microphone_status_ready" description="Microphone ready status">음성 인식 준비가 완료되었습니다. Ray-Ban Meta를 착용하고 말해주세요.</string>
+    <string name="microphone_status_listening" description="Microphone listening status">Ray-Ban Meta 마이크 입력을 인식 중입니다.</string>
+    <string name="microphone_status_completed" description="Microphone STT completed status">음성 인식이 완료되었습니다.</string>
+    <string name="microphone_status_rayban_found" description="Ray-Ban candidate input device found">Ray-Ban Meta 후보 입력 장치 감지: %1$s</string>
+    <string name="microphone_status_bluetooth_found" description="Bluetooth input device found but not Ray-Ban">Bluetooth 입력 장치는 감지되었지만 Ray-Ban Meta로 확인되지 않았습니다.</string>
+    <string name="microphone_status_no_rayban" description="No Ray-Ban input status">Ray-Ban Meta 마이크 입력 장치가 감지되지 않았습니다.</string>
+    <string name="microphone_route_hint" description="Microphone route hint">휴대폰 내장 마이크로 대체하지 않습니다. Ray-Ban Meta 입력이 감지된 경우에만 녹음을 시작합니다.</string>
+    <string name="microphone_error_record_audio_permission" description="Record audio permission required error">마이크 권한이 필요합니다. 권한을 허용한 뒤 다시 시도해주세요.</string>
+    <string name="microphone_error_bluetooth_permission" description="Bluetooth permission required error">Bluetooth 장치 확인 권한이 필요합니다.</string>
+    <string name="microphone_error_rayban_unavailable" description="Ray-Ban input unavailable error">Ray-Ban Meta 마이크 입력을 확인할 수 없습니다. Bluetooth 연결을 확인해주세요.</string>
+    <string name="microphone_error_rayban_route" description="Ray-Ban route unavailable error">Ray-Ban Meta 마이크로 오디오 입력 경로를 요청할 수 없습니다.</string>
+    <string name="microphone_error_stt_unavailable" description="Speech recognizer unavailable error">Android 음성 인식 서비스를 사용할 수 없습니다. 음성 입력 설정을 확인해주세요.</string>
+    <string name="microphone_error_no_speech" description="No speech detected error">음성이 감지되지 않았습니다. 안경을 착용하고 다시 말해주세요.</string>
+    <string name="microphone_error_recognition" description="Speech recognition failed error">음성 인식 중 오류가 발생했습니다. 다시 시도해주세요.</string>
 
     <!-- Camera Screen -->
     <string name="camera_access_icon_description" description="AIGlassFood icon description">AIGlassFood icon</string>

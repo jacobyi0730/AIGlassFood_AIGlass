@@ -47,9 +47,11 @@ import com.mtvs.food.wearables.WearablesViewModel
 @Composable
 fun HomeScreen(
     viewModel: WearablesViewModel,
+    onRequestRecordAudioPermission: suspend () -> Boolean,
     modifier: Modifier = Modifier,
 ) {
   var isSpeakerTestVisible by remember { mutableStateOf(false) }
+  var isMicrophoneTestVisible by remember { mutableStateOf(false) }
   val scrollState = rememberScrollState()
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val activity = LocalActivity.current
@@ -58,6 +60,14 @@ fun HomeScreen(
 
   if (isSpeakerTestVisible) {
     SpeakerTestScreen(onBack = { isSpeakerTestVisible = false }, modifier = modifier)
+    return
+  }
+  if (isMicrophoneTestVisible) {
+    MicrophoneTestScreen(
+        onBack = { isMicrophoneTestVisible = false },
+        onRequestRecordAudioPermission = onRequestRecordAudioPermission,
+        modifier = modifier,
+    )
     return
   }
 
@@ -126,6 +136,10 @@ fun HomeScreen(
       SwitchButton(
           label = stringResource(R.string.speaker_test_button_title),
           onClick = { isSpeakerTestVisible = true },
+      )
+      SwitchButton(
+          label = stringResource(R.string.microphone_test_button_title),
+          onClick = { isMicrophoneTestVisible = true },
       )
     }
   }

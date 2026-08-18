@@ -47,7 +47,10 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -71,6 +74,7 @@ fun AIGlassFoodScaffold(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
   val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+  var selectedTestMode by rememberSaveable { mutableStateOf(AIGlassTestMode.Camera) }
 
   // Observe recent errors and show snackbar
   LaunchedEffect(uiState.recentError?.id) {
@@ -83,14 +87,46 @@ fun AIGlassFoodScaffold(
   Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Box(modifier = Modifier.fillMaxSize()) {
       if (uiState.isRegistered) {
-        CameraScreen(
-            wearablesViewModel = viewModel,
-            onRequestWearablesPermission = onRequestWearablesPermission,
-            onRequestRecordAudioPermission = onRequestRecordAudioPermission,
-        )
+        when (selectedTestMode) {
+          AIGlassTestMode.Camera ->
+              CameraScreen(
+                  wearablesViewModel = viewModel,
+                  onRequestWearablesPermission = onRequestWearablesPermission,
+                  onRequestRecordAudioPermission = onRequestRecordAudioPermission,
+                  testModeSwitch = {
+                    TestModeSwitchBar(
+                        selectedMode = selectedTestMode,
+                        onModeSelected = { selectedTestMode = it },
+                        dark = true,
+                    )
+                  },
+              )
+          AIGlassTestMode.Speaker ->
+              SpeakerTestScreen(
+                  onBack = { selectedTestMode = AIGlassTestMode.Camera },
+                  testModeSwitch = {
+                    TestModeSwitchBar(
+                        selectedMode = selectedTestMode,
+                        onModeSelected = { selectedTestMode = it },
+                    )
+                  },
+              )
+          AIGlassTestMode.Microphone ->
+              MicrophoneTestScreen(
+                  onBack = { selectedTestMode = AIGlassTestMode.Camera },
+                  onRequestRecordAudioPermission = onRequestRecordAudioPermission,
+                  testModeSwitch = {
+                    TestModeSwitchBar(
+                        selectedMode = selectedTestMode,
+                        onModeSelected = { selectedTestMode = it },
+                    )
+                  },
+              )
+        }
       } else {
         HomeScreen(
             viewModel = viewModel,
+            onRequestRecordAudioPermission = onRequestRecordAudioPermission,
         )
       }
 

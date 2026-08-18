@@ -97,6 +97,7 @@ fun CameraScreen(
     onRequestWearablesPermission: suspend (Permission) -> PermissionStatus,
     onRequestRecordAudioPermission: suspend () -> Boolean,
     modifier: Modifier = Modifier,
+    testModeSwitch: (@Composable () -> Unit)? = null,
     cameraViewModel: CameraViewModel = viewModel(
         factory =
             CameraViewModel.Factory(
@@ -144,6 +145,9 @@ fun CameraScreen(
             showSettingsMenu = false
           },
       )
+      testModeSwitch?.let { switch ->
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) { switch() }
+      }
 
       Spacer(modifier = Modifier.weight(1f))
 
