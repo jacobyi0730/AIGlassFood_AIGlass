@@ -7,12 +7,26 @@
  */
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.jetbrains.kotlin.android)
   alias(libs.plugins.compose.compiler)
 }
+
+val localProperties = Properties().apply {
+  val localPropertiesFile = rootProject.file("local.properties")
+  if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use(::load)
+  }
+}
+
+val foodServerBaseUrl =
+    (localProperties.getProperty("foodServerBaseUrl")
+            ?: providers.gradleProperty("foodServerBaseUrl").orNull
+            ?: "http://10.0.2.2:8000/")
+        .trim()
 
 android {
   namespace = "com.mtvs.food"
@@ -34,13 +48,18 @@ android {
     // in Wearables Developer Center
     manifestPlaceholders["mwdat_application_id"] = "0"
     manifestPlaceholders["mwdat_client_token"] = "0"
+    buildConfigField("String", "FOOD_SERVER_BASE_URL", "\"$foodServerBaseUrl\"")
   }
 
   buildTypes {
+    debug {
+      manifestPlaceholders["usesCleartextTraffic"] = "true"
+    }
     release {
       isMinifyEnabled = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("debug")
+      manifestPlaceholders["usesCleartextTraffic"] = "false"
     }
   }
   compileOptions {
@@ -69,9 +88,12 @@ dependencies {
   implementation(libs.androidx.material.icons.extended)
   implementation(libs.androidx.material3)
   implementation(libs.kotlinx.collections.immutable)
+  implementation(libs.okhttp)
   implementation(libs.mwdat.core)
   implementation(libs.mwdat.camera)
   implementation(libs.mwdat.mockdevice)
+  testImplementation(libs.junit4)
+  testImplementation(libs.okhttp.mockwebserver)
   androidTestImplementation(libs.androidx.ui.test.junit4)
   androidTestImplementation(libs.androidx.test.uiautomator)
   androidTestImplementation(libs.androidx.test.rules)

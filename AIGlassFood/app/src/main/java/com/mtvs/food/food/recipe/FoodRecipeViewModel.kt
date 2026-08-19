@@ -1,6 +1,8 @@
 package com.mtvs.food.food.recipe
 
 import android.app.Application
+import android.net.Uri
+import android.util.Log
 import android.view.Surface
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
@@ -8,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
+import com.mtvs.food.BuildConfig
 import com.mtvs.food.camera.CameraViewModel
 import com.mtvs.food.camera.CapturePreview
 import com.mtvs.food.food.camera.FoodImageCacheRepository
@@ -22,6 +25,8 @@ import com.mtvs.food.speaker.SpeakerError
 import com.mtvs.food.speaker.TtsPlaybackStatus
 import com.mtvs.food.speaker.TtsSpeakerController
 import com.mtvs.food.wearables.WearablesViewModel
+import java.io.IOException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,15 +37,19 @@ class FoodRecipeViewModel(
     application: Application,
     private val wearablesViewModel: WearablesViewModel,
 ) : AndroidViewModel(application) {
+  private val logTag = "FoodRecipeFlow"
   private val cameraViewModel = CameraViewModel(application, wearablesViewModel)
   private val imageCacheRepository = FoodImageCacheRepository(application)
   private val audioInputDeviceMonitor = AudioInputDeviceMonitor(application)
   private val audioOutputDeviceMonitor = AudioOutputDeviceMonitor(application)
+  private val recipeRepository = RecipeRepository(application.contentResolver)
 
-  private val _uiState = MutableStateFlow(FoodRecipeUiState())
+  private val _uiState =
+      MutableStateFlow(FoodRecipeUiState(serverBaseUrl = BuildConfig.FOOD_SERVER_BASE_URL))
   val uiState: StateFlow<FoodRecipeUiState> = _uiState.asStateFlow()
 
   private var lastCapturedPhotoId: Int? = null
+  private var recipeRequestJob: Job? = null
 
   private val speechToTextController =
       SpeechToTextController(
@@ -80,6 +89,7 @@ class FoodRecipeViewModel(
                 override fun onFinalResults(results: List<String>) {
                   audioInputDeviceMonitor.releaseCommunicationRoute()
                   val finalText = results.firstOrNull().orEmpty()
+                  cancelRecipeRequest()
                   _uiState.update {
                     it.copy(
                         recognitionStatus = RecognitionStatus.Completed,
@@ -191,6 +201,7 @@ class FoodRecipeViewModel(
             lastCapturedPhotoId = captureId
             val imageUri = imageCacheRepository.saveCapturedPhoto(preview.bitmap)
             imageCacheRepository.delete(_uiState.value.capturedImageUri)
+            cancelRecipeRequest()
             _uiState.update {
               it.copy(
                   capturedImageUri = imageUri,
@@ -236,6 +247,7 @@ class FoodRecipeViewModel(
   }
 
   fun retakeImage() {
+    cancelRecipeRequest()
     imageCacheRepository.delete(_uiState.value.capturedImageUri)
     lastCapturedPhotoId = null
     _uiState.update {
@@ -286,12 +298,16 @@ class FoodRecipeViewModel(
       clearMessages()
       val permissionGranted = requestRecordAudioPermission()
       if (!permissionGranted) {
-        _uiState.update { it.copy(errorMessage = MicrophoneError.RecordAudioPermissionRequired.toMessage()) }
+        _uiState.update {
+          it.copy(errorMessage = MicrophoneError.RecordAudioPermissionRequired.toMessage())
+        }
         return@launch
       }
 
       if (!speechToTextController.isAvailable()) {
-        _uiState.update { it.copy(errorMessage = MicrophoneError.SpeechRecognizerUnavailable.toMessage()) }
+        _uiState.update {
+          it.copy(errorMessage = MicrophoneError.SpeechRecognizerUnavailable.toMessage())
+        }
         return@launch
       }
 
@@ -306,19 +322,25 @@ class FoodRecipeViewModel(
 
       when (scanResult.routeStatus) {
         InputRouteStatus.PermissionRequired -> {
-          _uiState.update { it.copy(errorMessage = MicrophoneError.BluetoothPermissionRequired.toMessage()) }
+          _uiState.update {
+            it.copy(errorMessage = MicrophoneError.BluetoothPermissionRequired.toMessage())
+          }
           return@launch
         }
         InputRouteStatus.NoRayBanInput,
         InputRouteStatus.BluetoothInputFound -> {
-          _uiState.update { it.copy(errorMessage = MicrophoneError.RayBanInputUnavailable.toMessage()) }
+          _uiState.update {
+            it.copy(errorMessage = MicrophoneError.RayBanInputUnavailable.toMessage())
+          }
           return@launch
         }
         InputRouteStatus.RayBanCandidateFound -> Unit
       }
 
       if (!audioInputDeviceMonitor.requestRayBanCommunicationRoute()) {
-        _uiState.update { it.copy(errorMessage = MicrophoneError.RayBanRouteUnavailable.toMessage()) }
+        _uiState.update {
+          it.copy(errorMessage = MicrophoneError.RayBanRouteUnavailable.toMessage())
+        }
         return@launch
       }
 
@@ -354,6 +376,7 @@ class FoodRecipeViewModel(
   }
 
   fun updatePromptText(text: String) {
+    cancelRecipeRequest()
     _uiState.update {
       it.copy(
           promptText = text,
@@ -366,6 +389,7 @@ class FoodRecipeViewModel(
   }
 
   fun clearPrompt() {
+    cancelRecipeRequest()
     _uiState.update {
       it.copy(
           promptText = "",
@@ -383,8 +407,14 @@ class FoodRecipeViewModel(
     val imageUri = _uiState.value.capturedImageUri
     val promptText = _uiState.value.promptText.trim()
 
+    Log.d(
+        logTag,
+        "prepareRecipeRequest imageUri=$imageUri promptLength=${promptText.length} serverBaseUrl=${BuildConfig.FOOD_SERVER_BASE_URL}"
+    )
+
     when {
       imageUri == null -> {
+        Log.w(logTag, "prepareRecipeRequest blocked: image is missing")
         _uiState.update {
           it.copy(
               errorMessage = "Capture a food photo first.",
@@ -394,6 +424,7 @@ class FoodRecipeViewModel(
         }
       }
       promptText.isBlank() -> {
+        Log.w(logTag, "prepareRecipeRequest blocked: prompt is blank")
         _uiState.update {
           it.copy(
               errorMessage = "Speak or type what you want to cook first.",
@@ -402,42 +433,86 @@ class FoodRecipeViewModel(
           )
         }
       }
-      else -> {
-        _uiState.update {
-          it.copy(
-              recipeText = "",
-              errorMessage = null,
-              isRequestingRecipe = false,
-              requestReadyMessage = "The recipe request is ready to send.",
-          )
-        }
-      }
+      else -> requestRecipe(imageUri = imageUri, promptText = promptText)
     }
   }
 
-  fun onRecipeRequestStarted() {
+  private fun requestRecipe(imageUri: Uri, promptText: String) {
+    if (recipeRequestJob?.isActive == true) {
+      Log.w(logTag, "requestRecipe skipped because another request is already running")
+      return
+    }
+
+    recipeRequestJob =
+        viewModelScope.launch {
+          Log.d(logTag, "requestRecipe started imageUri=$imageUri")
+          onRecipeRequestStarted()
+
+          try {
+            val response =
+                recipeRepository.requestRecipe(
+                    imageUri = imageUri,
+                    prompt = promptText,
+                    language = DEFAULT_RECIPE_LANGUAGE,
+                )
+            Log.d(
+                logTag,
+                "requestRecipe succeeded recipeLength=${response.recipeText.length} elapsedMs=${response.elapsedMs}"
+            )
+            onRecipeRequestSucceeded(response.recipeText)
+          } catch (error: RecipeApiException) {
+            Log.e(
+                logTag,
+                "requestRecipe failed kind=${error.kind} serverCode=${error.serverCode} message=${error.userMessage}",
+                error,
+            )
+            if (error.kind == RecipeApiErrorKind.Cancelled) {
+              _uiState.update {
+                it.copy(
+                    isRequestingRecipe = false,
+                    requestReadyMessage = null,
+                )
+              }
+            } else {
+              onRecipeRequestFailed(error.userMessage)
+            }
+          } catch (_: IOException) {
+            Log.e(
+                logTag,
+                "requestRecipe failed with generic IOException while reaching ${BuildConfig.FOOD_SERVER_BASE_URL}"
+            )
+            onRecipeRequestFailed(
+                "The Android app could not reach the PC server. Check the server IP, port, and that both devices are on the same Wi-Fi network."
+            )
+          } finally {
+            recipeRequestJob = null
+          }
+        }
+  }
+
+  private fun onRecipeRequestStarted() {
     _uiState.update {
       it.copy(
           isRequestingRecipe = true,
           recipeText = "",
           errorMessage = null,
-          requestReadyMessage = null,
+          requestReadyMessage = "Requesting a recipe from ${BuildConfig.FOOD_SERVER_BASE_URL}",
       )
     }
   }
 
-  fun onRecipeRequestSucceeded(recipeText: String) {
+  private fun onRecipeRequestSucceeded(recipeText: String) {
     _uiState.update {
       it.copy(
           isRequestingRecipe = false,
           recipeText = recipeText,
           errorMessage = null,
-          requestReadyMessage = null,
+          requestReadyMessage = "Recipe response received from the PC server.",
       )
     }
   }
 
-  fun onRecipeRequestFailed(message: String) {
+  private fun onRecipeRequestFailed(message: String) {
     _uiState.update {
       it.copy(
           isRequestingRecipe = false,
@@ -465,18 +540,23 @@ class FoodRecipeViewModel(
 
     when (scanResult.routeStatus) {
       AudioRouteStatus.PermissionRequired -> {
-        _uiState.update { it.copy(errorMessage = SpeakerError.BluetoothPermissionRequired.toMessage()) }
+        _uiState.update {
+          it.copy(errorMessage = SpeakerError.BluetoothPermissionRequired.toMessage())
+        }
         return
       }
       AudioRouteStatus.NoBluetoothAudio -> {
-        _uiState.update { it.copy(errorMessage = SpeakerError.BluetoothAudioUnavailable.toMessage()) }
+        _uiState.update {
+          it.copy(errorMessage = SpeakerError.BluetoothAudioUnavailable.toMessage())
+        }
         return
       }
       AudioRouteStatus.BluetoothAudioFound,
       AudioRouteStatus.RayBanCandidateFound -> Unit
     }
 
-    val didStart = ttsSpeakerController.speak(text = currentRecipe, speechRate = 1.0f, pitch = 1.0f)
+    val didStart =
+        ttsSpeakerController.speak(text = currentRecipe, speechRate = 1.0f, pitch = 1.0f)
     if (!didStart) {
       _uiState.update { it.copy(errorMessage = SpeakerError.TtsSpeakFailed.toMessage()) }
     }
@@ -491,17 +571,27 @@ class FoodRecipeViewModel(
     _uiState.update { it.copy(errorMessage = null) }
   }
 
+  private fun cancelRecipeRequest() {
+    recipeRequestJob?.cancel()
+    recipeRequestJob = null
+  }
+
   private fun clearMessages() {
     _uiState.update { it.copy(errorMessage = null, requestReadyMessage = null) }
   }
 
   override fun onCleared() {
+    cancelRecipeRequest()
     imageCacheRepository.delete(_uiState.value.capturedImageUri)
     speechToTextController.destroy()
     audioInputDeviceMonitor.releaseCommunicationRoute()
     ttsSpeakerController.shutdown()
     cameraViewModel.release()
     super.onCleared()
+  }
+
+  companion object {
+    private const val DEFAULT_RECIPE_LANGUAGE = "ko-KR"
   }
 
   class Factory(

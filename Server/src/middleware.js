@@ -32,6 +32,8 @@ export function requestLogger(request, _response, next) {
     method: request.method,
     path: request.path,
     contentType: request.headers["content-type"],
+    contentLength: request.headers["content-length"],
+    userAgent: request.headers["user-agent"],
   });
   next();
 }
@@ -44,16 +46,30 @@ export function errorHandler(error, _request, response, _next) {
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
       const sizeError = new AppError(400, "IMAGE_TOO_LARGE", "image must be 8 MB or smaller.");
+      logError("Multipart upload size error", {
+        code: error.code,
+        field: error.field,
+      });
       response.status(sizeError.status).json(createErrorResponse(sizeError));
       return;
     }
 
     const uploadError = new AppError(400, "MULTIPART_UPLOAD_ERROR", "The multipart upload could not be processed.");
+    logError("Multipart upload error", {
+      code: error.code,
+      field: error.field,
+      message: error.message,
+    });
     response.status(uploadError.status).json(createErrorResponse(uploadError));
     return;
   }
 
   if (error instanceof AppError) {
+    logError("Application error response", {
+      status: error.status,
+      code: error.code,
+      message: error.message,
+    });
     response.status(error.status).json(createErrorResponse(error));
     return;
   }

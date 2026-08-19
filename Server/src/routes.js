@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AppError } from "./errors.js";
 import { recipeUpload } from "./middleware.js";
+import { logError, logInfo } from "./logger.js";
 
 function normalizeLanguage(language) {
   const normalized = String(language || "").trim();
@@ -40,23 +41,50 @@ export function createRouter({ config, recipeService }) {
   });
 
   router.post("/api/recipe", recipeUpload.single("image"), async (request, response, next) => {
+    const requestId = `recipe-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
     try {
       const startedAt = Date.now();
       const { prompt, language, imageBuffer, imageMimeType } = validateRecipeRequest(request);
 
+      logInfo("Recipe request accepted", {
+        requestId,
+        promptLength: prompt.length,
+        promptPreview: prompt.slice(0, 80),
+        language,
+        imageMimeType,
+        imageBytes: imageBuffer.length,
+      });
+
       const recipe = await recipeService.createRecipe({
+        requestId,
         imageBuffer,
         imageMimeType,
         prompt,
         language,
       });
 
+      const elapsedMs = Date.now() - startedAt;
+      logInfo("Recipe request completed", {
+        requestId,
+        elapsedMs,
+        responseTextLength: recipe.recipeText.length,
+        model: recipe.model || config.nvidiaModel,
+      });
+
       response.json({
         recipeText: recipe.recipeText,
         model: recipe.model || config.nvidiaModel,
-        elapsedMs: Date.now() - startedAt,
+        elapsedMs,
       });
     } catch (error) {
+      logError("Recipe request failed", {
+        requestId,
+        name: error?.name,
+        message: error?.message,
+        code: error?.code,
+        status: error?.status,
+      });
       next(error);
     }
   });

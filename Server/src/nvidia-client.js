@@ -1,4 +1,5 @@
 import { AppError } from "./errors.js";
+import { logError, logInfo } from "./logger.js";
 
 const DEFAULT_TIMEOUT_MS = 45000;
 const MAX_RETRY_ATTEMPTS = 2;
@@ -86,7 +87,7 @@ function mapNetworkError(error) {
 
 export function createNvidiaClient({ config, fetchImpl = fetch }) {
   return {
-    async createRecipeCompletion({ imageBuffer, imageMimeType, prompt, language, systemPrompt, userPrompt }) {
+    async createRecipeCompletion({ requestId, imageBuffer, imageMimeType, prompt, language, systemPrompt, userPrompt }) {
       if (!config.nvidiaApiKey) {
         throw new AppError(500, "NVIDIA_CONFIG_MISSING", "NVIDIA_API_KEY is not configured on the server.");
       }
@@ -124,10 +125,24 @@ export function createNvidiaClient({ config, fetchImpl = fetch }) {
       };
 
       let lastError = null;
+      const endpoint = buildEndpoint(config.nvidiaBaseUrl);
 
       for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt += 1) {
         try {
-          const response = await fetchImpl(buildEndpoint(config.nvidiaBaseUrl), {
+          const startedAt = Date.now();
+          logInfo("Calling NVIDIA recipe API", {
+            requestId,
+            attempt,
+            maxAttempts: MAX_RETRY_ATTEMPTS,
+            endpoint,
+            model: config.nvidiaModel,
+            promptLength: prompt.length,
+            language,
+            imageMimeType,
+            imageBytes: imageBuffer.length,
+          });
+
+          const response = await fetchImpl(endpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -139,10 +154,26 @@ export function createNvidiaClient({ config, fetchImpl = fetch }) {
           });
 
           const payload = await parseJsonSafely(response);
+          const elapsedMs = Date.now() - startedAt;
+
+          logInfo("Received NVIDIA response", {
+            requestId,
+            attempt,
+            status: response.status,
+            ok: response.ok,
+            elapsedMs,
+            payloadKeys: payload ? Object.keys(payload).slice(0, 10) : [],
+          });
 
           if (!response.ok) {
             const mappedError = mapUpstreamHttpError(response, payload);
             if (attempt < MAX_RETRY_ATTEMPTS && shouldRetryStatus(response.status)) {
+              logInfo("Retrying NVIDIA request after upstream status", {
+                requestId,
+                attempt,
+                status: response.status,
+                mappedCode: mappedError.code,
+              });
               lastError = mappedError;
               continue;
             }
@@ -161,12 +192,26 @@ export function createNvidiaClient({ config, fetchImpl = fetch }) {
             prompt,
           };
         } catch (error) {
+          logError("NVIDIA request attempt failed", {
+            requestId,
+            attempt,
+            name: error?.name,
+            message: error?.message,
+            code: error?.code,
+            status: error?.status,
+          });
+
           if (error instanceof AppError) {
             throw error;
           }
 
           const mappedError = mapNetworkError(error);
           if (attempt < MAX_RETRY_ATTEMPTS && shouldRetryError(error)) {
+            logInfo("Retrying NVIDIA request after network error", {
+              requestId,
+              attempt,
+              mappedCode: mappedError.code,
+            });
             lastError = mappedError;
             continue;
           }

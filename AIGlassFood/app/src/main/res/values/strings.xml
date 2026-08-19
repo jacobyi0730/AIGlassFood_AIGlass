@@ -213,7 +213,7 @@
     <string name="food_clear_button" description="Food screen clear button">Clear</string>
     <string name="food_request_title" description="Food screen request section title">Recipe request</string>
     <string name="food_request_description" description="Food screen request section description">Validate that both the image and prompt are ready before sending them to the server.</string>
-    <string name="food_prepare_request_button" description="Food screen request validation button">Prepare recipe request</string>
+    <string name="food_prepare_request_button" description="Food screen request button">Request recipe</string>
     <string name="food_request_loading_message" description="Food screen request loading message">Requesting a recipe response…</string>
     <string name="food_result_title" description="Food screen result section title">Recipe result</string>
     <string name="food_result_description" description="Food screen result section description">The returned recipe text appears here and can be played back through TTS.</string>

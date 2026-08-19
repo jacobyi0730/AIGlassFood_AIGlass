@@ -25,6 +25,7 @@ data class FoodRecipeUiState(
     val inputRouteStatus: InputRouteStatus = InputRouteStatus.NoRayBanInput,
     val selectedInputDeviceName: String? = null,
     val isRequestingRecipe: Boolean = false,
+    val serverBaseUrl: String = "",
     val requestReadyMessage: String? = null,
     val recipeText: String = "",
     val ttsPlaybackStatus: TtsPlaybackStatus = TtsPlaybackStatus.Initializing,
