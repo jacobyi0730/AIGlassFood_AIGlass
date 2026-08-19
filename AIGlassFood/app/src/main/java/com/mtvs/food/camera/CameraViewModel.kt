@@ -599,13 +599,17 @@ class CameraViewModel(
     return matrix
   }
 
-  override fun onCleared() {
-    super.onCleared()
+  fun release() {
     clearStreamResources()
     session?.stop()
     cleanupSession()
     audioInputHandler.cleanup()
     videoRecorder.close()
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    release()
   }
 
   class Factory(

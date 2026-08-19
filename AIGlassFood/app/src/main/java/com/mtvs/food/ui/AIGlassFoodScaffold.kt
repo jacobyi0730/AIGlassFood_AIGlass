@@ -61,6 +61,7 @@ import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
 import com.mtvs.food.BuildConfig
 import com.mtvs.food.R
+import com.mtvs.food.food.ui.FoodRecipeScreen
 import com.mtvs.food.wearables.WearablesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,17 +90,10 @@ fun AIGlassFoodScaffold(
       if (uiState.isRegistered) {
         when (selectedTestMode) {
           AIGlassTestMode.Camera ->
-              CameraScreen(
+              FoodRecipeScreen(
                   wearablesViewModel = viewModel,
                   onRequestWearablesPermission = onRequestWearablesPermission,
                   onRequestRecordAudioPermission = onRequestRecordAudioPermission,
-                  testModeSwitch = {
-                    TestModeSwitchBar(
-                        selectedMode = selectedTestMode,
-                        onModeSelected = { selectedTestMode = it },
-                        dark = true,
-                    )
-                  },
               )
           AIGlassTestMode.Speaker ->
               SpeakerTestScreen(

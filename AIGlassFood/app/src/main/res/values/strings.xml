@@ -178,4 +178,49 @@
     <string name="camera_permission_alert_title" description="Camera permission alert title">AIGlassFood required</string>
     <string name="camera_permission_alert_message" description="Camera permission alert message">AIGlassFood was denied. Enable it in Settings to use the camera source.</string>
     <string name="camera_permission_open_settings" description="Camera permission open settings button">Open Settings</string>
+
+    <!-- Food Recipe Screen -->
+    <string name="food_status_title" description="Food screen status section title">Connection status</string>
+    <string name="food_status_description" description="Food screen status section description">Check registration, camera, microphone and speaker readiness before starting.</string>
+    <string name="food_status_registration" description="Food screen registration status label">Glasses</string>
+    <string name="food_status_active_device" description="Food screen active device label">Active device</string>
+    <string name="food_status_session" description="Food screen session label">Session</string>
+    <string name="food_status_stream" description="Food screen stream label">Preview</string>
+    <string name="food_status_input" description="Food screen input device label">Mic</string>
+    <string name="food_status_output" description="Food screen output device label">Speaker</string>
+    <string name="food_status_registered" description="Food screen glasses registered status">Registered</string>
+    <string name="food_status_not_registered" description="Food screen glasses not registered status">Not registered</string>
+    <string name="food_status_connected" description="Food screen connected active device status">Connected</string>
+    <string name="food_status_waiting" description="Food screen waiting device status">Waiting</string>
+    <string name="food_hero_title" description="Food screen hero title">Food Recipe Flow</string>
+    <string name="food_hero_subtitle_default" description="Food screen hero default subtitle">Capture a food image, describe what you want, then prepare the request in one scrollable flow.</string>
+    <string name="food_hero_subtitle_unregistered" description="Food screen hero subtitle when glasses are not registered">Connect your Ray-Ban Meta glasses first so camera, microphone and speaker controls can be used here.</string>
+    <string name="food_hero_subtitle_loading" description="Food screen hero subtitle while request is loading">The recipe request is in progress. Keep this screen open while the response is being prepared.</string>
+    <string name="food_hero_subtitle_result_ready" description="Food screen hero subtitle when result is ready">Your latest recipe text is ready below and can be read aloud with TTS.</string>
+    <string name="food_camera_title" description="Food screen camera section title">Food image</string>
+    <string name="food_camera_description" description="Food screen camera section description">Start the glasses camera session, preview the scene and capture a food image.</string>
+    <string name="food_camera_placeholder" description="Food screen camera placeholder">Start a session and preview to see the glasses camera.</string>
+    <string name="food_camera_loading" description="Food screen camera loading message">Preparing the live camera preview…</string>
+    <string name="food_camera_preview_content_description" description="Food screen camera preview content description">Food camera preview or captured image</string>
+    <string name="food_capture_button" description="Food screen capture button">Capture</string>
+    <string name="food_retake_button" description="Food screen retake button">Retake</string>
+    <string name="food_prompt_title" description="Food screen prompt section title">Prompt</string>
+    <string name="food_prompt_description" description="Food screen prompt section description">Use speech recognition from the glasses microphone or edit the prompt directly.</string>
+    <string name="food_prompt_listening_status" description="Food screen prompt listening status label">Speech</string>
+    <string name="food_partial_prompt_format" description="Food screen partial prompt format">Listening: %1$s</string>
+    <string name="food_prompt_field_label" description="Food screen prompt field label">What should I cook?</string>
+    <string name="food_prompt_placeholder" description="Food screen prompt placeholder">Example: Suggest a healthy dinner I can make in 20 minutes.</string>
+    <string name="food_clear_button" description="Food screen clear button">Clear</string>
+    <string name="food_request_title" description="Food screen request section title">Recipe request</string>
+    <string name="food_request_description" description="Food screen request section description">Validate that both the image and prompt are ready before sending them to the server.</string>
+    <string name="food_prepare_request_button" description="Food screen request validation button">Prepare recipe request</string>
+    <string name="food_request_loading_message" description="Food screen request loading message">Requesting a recipe response…</string>
+    <string name="food_result_title" description="Food screen result section title">Recipe result</string>
+    <string name="food_result_description" description="Food screen result section description">The returned recipe text appears here and can be played back through TTS.</string>
+    <string name="food_result_tts_status" description="Food screen result TTS status label">TTS</string>
+    <string name="food_result_placeholder" description="Food screen result placeholder">Recipe text from the server will appear here.</string>
+    <string name="food_recipe_tts_button" description="Food screen recipe TTS button">Read recipe</string>
+    <string name="food_registration_help" description="Food screen registration help message">Register the glasses in the Meta AI flow first, then return here to continue.</string>
+    <string name="food_open_bluetooth_settings" description="Food screen open Bluetooth settings action">Open Bluetooth settings</string>
+    <string name="food_open_app_settings" description="Food screen open app settings action">Open app settings</string>
 </resources>
